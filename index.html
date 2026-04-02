@@ -1,192 +1,888 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Game Hub</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Game Hub X 50+</title>
 <style>
-body{margin:0;background:#0b1220;color:#fff;font-family:sans-serif}
-header{padding:20px;text-align:center;font-size:32px}
-#games{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px;padding:20px}
-.game{background:#1e293b;padding:20px;border-radius:10px;cursor:pointer;text-align:center}
-.game:hover{transform:scale(1.08);background:#334155}
-canvas{background:#000;display:block;margin:auto}
-#back{position:fixed;top:10px;left:10px;padding:10px;display:none}
+  :root{
+    --bg:#07111f; --panel:#0f1a2e; --panel2:#13233d; --text:#e8f0ff;
+    --muted:#8fa7c7; --accent:#7c5cff; --accent2:#00d4ff; --danger:#ff5c7a;
+    --good:#36d399; --shadow:0 20px 60px rgba(0,0,0,.35);
+    --radius:22px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(circle at top, rgba(124,92,255,.18), transparent 30%),
+      radial-gradient(circle at 80% 20%, rgba(0,212,255,.10), transparent 24%),
+      linear-gradient(180deg, #07111f 0%, #050b14 100%);
+    color:var(--text);
+    overflow:hidden;
+  }
+  .app{display:grid; grid-template-rows:auto auto 1fr; height:100vh}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:18px 18px 10px;
+  }
+  .brand{display:flex; flex-direction:column; gap:4px}
+  .brand h1{margin:0; font-size:clamp(22px,3vw,34px); letter-spacing:.3px}
+  .brand p{margin:0; color:var(--muted); font-size:14px}
+  .searchRow{
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:0 18px 14px;
+  }
+  .searchRow input, .searchRow select, .searchRow button{
+    border:none; outline:none; color:var(--text);
+    background:rgba(255,255,255,.06); backdrop-filter:blur(10px);
+    box-shadow:var(--shadow);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .searchRow input{
+    flex:1; min-width:220px; padding:14px 16px; border-radius:16px; font-size:15px;
+  }
+  .searchRow select,.searchRow button{padding:14px 16px; border-radius:16px; font-size:14px; cursor:pointer}
+  .searchRow button:hover,.gameCard:hover,.backBtn:hover{transform:translateY(-2px)}
+  .searchRow button{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .pillBar{display:flex; gap:10px; flex-wrap:wrap; padding:0 18px 16px}
+  .pill{
+    padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.08); color:var(--muted); font-size:13px;
+  }
+  .main{display:grid; grid-template-columns:1.05fr .95fr; gap:16px; padding:0 18px 18px; min-height:0}
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.08); border-radius:var(--radius);
+    box-shadow:var(--shadow); min-height:0; overflow:hidden;
+  }
+  .left{display:flex; flex-direction:column; min-width:0}
+  .listHeader{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:16px 16px 12px; border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .listHeader h2{margin:0; font-size:18px}
+  .count{color:var(--muted); font-size:13px}
+  .grid{
+    padding:16px; overflow:auto;
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px;
+    align-content:start;
+  }
+  .gameCard{
+    background:linear-gradient(180deg, rgba(124,92,255,.12), rgba(0,0,0,.18));
+    border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:14px;
+    cursor:pointer; transition:transform .16s ease, border-color .16s ease, background .16s ease;
+    min-height:120px; display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .gameCard .title{font-weight:700; font-size:16px; margin:0 0 8px}
+  .gameCard .meta{font-size:12px; color:var(--muted); line-height:1.4}
+  .tag{
+    display:inline-flex; align-self:flex-start; margin-top:10px; padding:6px 10px; border-radius:999px;
+    background:rgba(255,255,255,.08); font-size:12px; color:#dbe7ff
+  }
+  .right{display:flex; flex-direction:column; min-width:0}
+  .stageHeader{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:16px; border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .stageHeader .titleWrap{display:flex; flex-direction:column; gap:4px; min-width:0}
+  .stageHeader h2{margin:0; font-size:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .stageHeader .desc{color:var(--muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .backBtn{
+    border:none; cursor:pointer; padding:12px 14px; border-radius:14px; color:white;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.10);
+    transition:transform .16s ease, background .16s ease;
+  }
+  .stage{position:relative; height:100%; min-height:0; display:flex; flex-direction:column}
+  .gameArea{flex:1; min-height:0; display:grid; place-items:center; padding:12px}
+  canvas{max-width:100%; max-height:100%; background:#02060d; border-radius:18px; box-shadow:var(--shadow)}
+  .overlay{
+    position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
+    opacity:0; transition:opacity .2s ease;
+    background:linear-gradient(180deg, rgba(5,10,18,.15), rgba(5,10,18,.55));
+  }
+  .overlay.show{opacity:1}
+  .overlayCard{
+    pointer-events:auto; text-align:center; background:rgba(12,18,30,.86);
+    border:1px solid rgba(255,255,255,.10); border-radius:24px; padding:24px; width:min(360px,90%);
+    box-shadow:var(--shadow);
+  }
+  .overlayCard h3{margin:0 0 10px; font-size:26px}
+  .overlayCard p{margin:0 0 18px; color:var(--muted); line-height:1.5}
+  .playBtn{
+    border:none; padding:14px 18px; border-radius:16px; cursor:pointer; color:white; font-weight:700;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+  }
+  .hidden{display:none !important}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.95em; background:rgba(255,255,255,.08); padding:2px 8px; border-radius:999px}
+  .footerHint{padding:0 18px 14px; color:var(--muted); font-size:13px}
+  @media (max-width: 980px){
+    body{overflow:auto}
+    .app{height:auto; min-height:100vh}
+    .main{grid-template-columns:1fr;}
+    .right{height:78vh; min-height:520px}
+  }
 </style>
 </head>
 <body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1>Game Hub X 50+</h1>
+      <p>Big library, instant play, all in one file.</p>
+    </div>
+  </div>
 
-<header>🔥 Game Hub</header>
-<button id="back" onclick="goBack()">Back</button>
-<div id="games"></div>
-<div id="gameArea"></div>
+  <div class="searchRow">
+    <input id="search" placeholder="Search games, e.g. dash, snake, puzzle..." />
+    <select id="filter">
+      <option value="all">All categories</option>
+      <option value="arcade">Arcade</option>
+      <option value="runner">Runner</option>
+      <option value="classic">Classic</option>
+      <option value="puzzle">Puzzle</option>
+      <option value="action">Action</option>
+    </select>
+    <button id="randomBtn">Random game</button>
+  </div>
+
+  <div class="pillBar">
+    <div class="pill">Keyboard friendly</div>
+    <div class="pill">No libraries</div>
+    <div class="pill">50+ entries</div>
+    <div class="pill">Single file</div>
+  </div>
+
+  <div class="main">
+    <section class="panel left">
+      <div class="listHeader">
+        <h2>Game Library</h2>
+        <div class="count" id="count">0 games</div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="panel right">
+      <div class="stageHeader">
+        <div class="titleWrap">
+          <h2 id="stageTitle">Pick a game</h2>
+          <div class="desc" id="stageDesc">Choose something from the list on the left.</div>
+        </div>
+        <button class="backBtn" id="backBtn">Back to Hub</button>
+      </div>
+      <div class="stage">
+        <div class="gameArea" id="gameArea">
+          <div style="text-align:center;color:var(--muted);max-width:480px;padding:20px;line-height:1.6">
+            Click a game card to launch it here. A lot of these are parameterized versions of real mini-games so the library stays big and playable in one file.
+          </div>
+        </div>
+        <div class="overlay" id="overlay">
+          <div class="overlayCard">
+            <h3 id="overlayTitle">Game Over</h3>
+            <p id="overlayText">Try again or pick another game.</p>
+            <button class="playBtn" id="restartBtn">Play again</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="footerHint">Controls change per game. Common ones: <span class="kbd">Space</span>, <span class="kbd">Arrow keys</span>, mouse, or tap.</div>
+</div>
 
 <script>
-const games = [
-{ name:"Geometry Dash", run:gd },
-{ name:"Snake", run:snake },
-{ name:"Pong", run:pong },
-{ name:"Flappy Bird", run:flappy }
+const grid = document.getElementById('grid');
+const search = document.getElementById('search');
+const filter = document.getElementById('filter');
+const count = document.getElementById('count');
+const gameArea = document.getElementById('gameArea');
+const stageTitle = document.getElementById('stageTitle');
+const stageDesc = document.getElementById('stageDesc');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const restartBtn = document.getElementById('restartBtn');
+const backBtn = document.getElementById('backBtn');
+const randomBtn = document.getElementById('randomBtn');
+
+let currentGame = null;
+let currentStop = null;
+let currentState = null;
+
+const rand = (min, max) => Math.random() * (max - min) + min;
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const choice = arr => arr[Math.floor(Math.random() * arr.length)];
+
+function canvasContext(w, h, fit = true) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  if (fit) {
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+  }
+  gameArea.innerHTML = '';
+  gameArea.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  return { canvas, ctx };
+}
+
+function showOverlay(title, text) {
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  overlay.classList.add('show');
+}
+function hideOverlay() { overlay.classList.remove('show'); }
+function endCurrentLoop() { if (typeof currentStop === 'function') currentStop(); currentStop = null; }
+function setActiveGame(game) {
+  currentGame = game;
+  stageTitle.textContent = game.name;
+  stageDesc.textContent = game.desc;
+  hideOverlay();
+  endCurrentLoop();
+  currentState = null;
+  if (game.mount) {
+    currentState = game.mount({
+      showOverlay,
+      hideOverlay,
+      setTitle: (t, d) => { stageTitle.textContent = t; stageDesc.textContent = d || ''; },
+      canvasContext,
+      rand,
+      clamp,
+      choice,
+      gameArea,
+      restart: () => setActiveGame(game)
+    });
+    currentStop = currentState && currentState.stop ? currentState.stop : null;
+  }
+}
+function makeCard(game) {
+  const card = document.createElement('div');
+  card.className = 'gameCard';
+  card.innerHTML = `
+    <div>
+      <div class="title">${game.name}</div>
+      <div class="meta">${game.desc}</div>
+    </div>
+    <div class="tag">${game.tag}</div>
+  `;
+  card.onclick = () => setActiveGame(game);
+  return card;
+}
+function renderList() {
+  const q = search.value.trim().toLowerCase();
+  const cat = filter.value;
+  const visible = GAMES.filter(g => {
+    const matchesQ = !q || g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q) || g.tag.toLowerCase().includes(q);
+    const matchesCat = cat === 'all' || g.category === cat;
+    return matchesQ && matchesCat;
+  });
+  grid.innerHTML = '';
+  visible.forEach(g => grid.appendChild(makeCard(g)));
+  count.textContent = `${visible.length} game${visible.length === 1 ? '' : 's'}`;
+  return visible;
+}
+
+function startLoop(draw, update, onStop) {
+  let raf = 0;
+  let last = performance.now();
+  let stopped = false;
+  function frame(now) {
+    if (stopped) return;
+    const dt = Math.min(32, now - last) / 16.6667;
+    last = now;
+    update(dt);
+    draw();
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+  return { stop: () => { stopped = true; cancelAnimationFrame(raf); if (onStop) onStop(); } };
+}
+
+function keyState() {
+  const state = { keys: new Set(), mouseX: 0, mouseY: 0, mouseDown: false, tap: false };
+  function onKeyDown(e){ state.keys.add(e.code); }
+  function onKeyUp(e){ state.keys.delete(e.code); }
+  function onMouseMove(e){ state.mouseX = e.clientX; state.mouseY = e.clientY; }
+  function onDown(){ state.mouseDown = true; state.tap = true; }
+  function onUp(){ state.mouseDown = false; }
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mousedown', onDown);
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchstart', onDown, { passive: true });
+  window.addEventListener('touchend', onUp, { passive: true });
+  return {
+    state,
+    destroy() {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchstart', onDown);
+      window.removeEventListener('touchend', onUp);
+    }
+  };
+}
+
+/* ==================== GAMES ==================== */
+function makeRunnerGame(cfg) {
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay, rand }) {
+      const { canvas, ctx } = canvasContext(960, 420);
+      const ks = keyState();
+      let score = 0;
+      let best = 0;
+      let t = 0;
+      const player = { x: 120, y: 320, vy: 0, w: 34, h: 34, onGround: true };
+      const ground = 350;
+      const obstacles = [];
+      const stars = Array.from({ length: 50 }, () => ({ x: rand(0, canvas.width), y: rand(0, 220), s: rand(1, 3) }));
+      let speed = cfg.speed;
+      let spawn = 0;
+      let dead = false;
+      function reset() {
+        score = 0; t = 0; speed = cfg.speed; spawn = 0; dead = false;
+        player.x = 120; player.y = 320; player.vy = 0; obstacles.length = 0;
+        hideOverlay();
+      }
+      function die() {
+        dead = true;
+        best = Math.max(best, Math.floor(score));
+        showOverlay(cfg.name, `Score: ${Math.floor(score)} · Best: ${best}`);
+      }
+      function loop() {
+        if (dead) return;
+        t += 1;
+        const jump = ks.state.keys.has('Space') || ks.state.keys.has('ArrowUp') || ks.state.tap;
+        ks.state.tap = false;
+        if (jump && player.onGround) {
+          player.vy = cfg.jump;
+          player.onGround = false;
+        }
+        player.vy += cfg.gravity;
+        player.y += player.vy;
+        if (player.y >= ground - player.h) { player.y = ground - player.h; player.vy = 0; player.onGround = true; }
+        speed += 0.002;
+        spawn -= 1;
+        if (spawn <= 0) {
+          obstacles.push({ x: canvas.width + 20, y: ground - cfg.obH, w: cfg.obW, h: cfg.obH, type: Math.random() < .5 ? 0 : 1 });
+          spawn = cfg.spawnMin + Math.floor(Math.random() * cfg.spawnVar);
+        }
+        for (const o of obstacles) o.x -= speed;
+        while (obstacles.length && obstacles[0].x + obstacles[0].w < -20) obstacles.shift();
+        for (const o of obstacles) {
+          if (player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) { die(); break; }
+        }
+        score += 0.08;
+      }
+      function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        // sky
+        const g = ctx.createLinearGradient(0,0,0,canvas.height);
+        g.addColorStop(0, cfg.sky1); g.addColorStop(1, cfg.sky2);
+        ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.7)';
+        for (const s of stars) {
+          s.x -= speed * 0.2 * s.s;
+          if (s.x < -5) { s.x = canvas.width + 5; s.y = rand(0, 220); s.s = rand(1,3); }
+          ctx.globalAlpha = 0.5 + s.s / 6;
+          ctx.fillRect(s.x, s.y, s.s, s.s);
+        }
+        ctx.globalAlpha = 1;
+        // ground
+        ctx.fillStyle = cfg.ground;
+        ctx.fillRect(0, ground, canvas.width, canvas.height - ground);
+        ctx.fillStyle = 'rgba(255,255,255,.08)';
+        ctx.fillRect(0, ground, canvas.width, 4);
+        // player
+        ctx.save();
+        ctx.fillStyle = cfg.player;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        ctx.restore();
+        // obstacles
+        ctx.fillStyle = cfg.obstacle;
+        for (const o of obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+        // score
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText(`${cfg.name}`, 18, 28);
+        ctx.font = '16px sans-serif';
+        ctx.fillText(`Score: ${Math.floor(score)}`, 18, 52);
+      }
+      currentStop = startLoop(draw, loop, () => ks.destroy());
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeSnakeGame(cfg) {
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay, rand }) {
+      const { canvas, ctx } = canvasContext(600, 600);
+      const ks = keyState();
+      const cell = 24;
+      let score = 0;
+      let best = 0;
+      let dead = false;
+      let tick = 0;
+      let speed = cfg.speed;
+      const snake = [{ x: 12, y: 12 }];
+      let dir = { x: 1, y: 0 };
+      let next = { x: 1, y: 0 };
+      let food = { x: 8, y: 8 };
+      function placeFood() {
+        food.x = Math.floor(rand(0, canvas.width / cell));
+        food.y = Math.floor(rand(0, canvas.height / cell));
+        while (snake.some(s => s.x === food.x && s.y === food.y)) {
+          food.x = Math.floor(rand(0, canvas.width / cell));
+          food.y = Math.floor(rand(0, canvas.height / cell));
+        }
+      }
+      function die() {
+        dead = true;
+        best = Math.max(best, score);
+        showOverlay(cfg.name, `Score: ${score} · Best: ${best}`);
+      }
+      function loop() {
+        if (dead) return;
+        const k = ks.state.keys;
+        if (k.has('ArrowUp') && dir.y !== 1) next = { x: 0, y: -1 };
+        else if (k.has('ArrowDown') && dir.y !== -1) next = { x: 0, y: 1 };
+        else if (k.has('ArrowLeft') && dir.x !== 1) next = { x: -1, y: 0 };
+        else if (k.has('ArrowRight') && dir.x !== -1) next = { x: 1, y: 0 };
+        tick++;
+        if (tick % speed === 0) {
+          dir = next;
+          const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+          if (head.x < 0 || head.y < 0 || head.x >= canvas.width / cell || head.y >= canvas.height / cell || snake.some(s => s.x === head.x && s.y === head.y)) return die();
+          snake.unshift(head);
+          if (head.x === food.x && head.y === food.y) { score++; placeFood(); if (speed > 5) speed -= 0.05; }
+          else snake.pop();
+        }
+      }
+      function draw() {
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.04)';
+        for (let y = 0; y < canvas.height; y += cell) for (let x = 0; x < canvas.width; x += cell) ctx.fillRect(x, y, 1, 1);
+        ctx.fillStyle = cfg.food; ctx.fillRect(food.x * cell + 2, food.y * cell + 2, cell - 4, cell - 4);
+        for (let i = snake.length - 1; i >= 0; i--) {
+          const s = snake[i];
+          ctx.fillStyle = i === 0 ? cfg.head : cfg.body;
+          ctx.fillRect(s.x * cell + 2, s.y * cell + 2, cell - 4, cell - 4);
+        }
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 28);
+        ctx.font = '16px sans-serif'; ctx.fillText(`Score: ${score}`, 18, 52);
+      }
+      placeFood();
+      currentStop = startLoop(draw, loop, () => ks.destroy());
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makePongGame(cfg) {
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay }) {
+      const { canvas, ctx } = canvasContext(900, 520);
+      const ks = keyState();
+      let score = 0;
+      let aiScore = 0;
+      let dead = false;
+      const paddle = { x: 20, y: 220, w: 14, h: 110 };
+      const ai = { x: canvas.width - 34, y: 220, w: 14, h: 110 };
+      const ball = { x: canvas.width / 2, y: canvas.height / 2, vx: cfg.vx, vy: cfg.vy, r: 8 };
+      function resetBall(dir = 1) { ball.x = canvas.width / 2; ball.y = canvas.height / 2; ball.vx = cfg.vx * dir; ball.vy = (Math.random() * 4 - 2) || 1; }
+      function die() { dead = true; showOverlay(cfg.name, `You ${score >= cfg.target ? 'won' : 'lost'} · Score ${score} : ${aiScore}`); }
+      function loop() {
+        if (dead) return;
+        const targetY = ks.state.mouseY || (ks.state.keys.has('ArrowUp') ? paddle.y - 12 : ks.state.keys.has('ArrowDown') ? paddle.y + 12 : paddle.y);
+        paddle.y = clamp(targetY - paddle.h/2, 0, canvas.height - paddle.h);
+        ai.y += (ball.y - (ai.y + ai.h/2)) * 0.06;
+        ai.y = clamp(ai.y, 0, canvas.height - ai.h);
+        ball.x += ball.vx; ball.y += ball.vy;
+        if (ball.y < ball.r || ball.y > canvas.height - ball.r) ball.vy *= -1;
+        const hitLeft = ball.x - ball.r < paddle.x + paddle.w && ball.y > paddle.y && ball.y < paddle.y + paddle.h && ball.vx < 0;
+        const hitRight = ball.x + ball.r > ai.x && ball.y > ai.y && ball.y < ai.y + ai.h && ball.vx > 0;
+        if (hitLeft) {
+          ball.vx = Math.abs(ball.vx) + 0.2; ball.vy += (ball.y - (paddle.y + paddle.h/2)) * 0.08; score++;
+        }
+        if (hitRight) {
+          ball.vx = -Math.abs(ball.vx) - 0.2; ball.vy += (ball.y - (ai.y + ai.h/2)) * 0.08;
+        }
+        if (ball.x < -20) { aiScore++; if (aiScore >= 7) return die(); resetBall(1); }
+        if (ball.x > canvas.width + 20) { score++; if (score >= cfg.target) return die(); resetBall(-1); }
+      }
+      function draw() {
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.12)';
+        for (let y = 0; y < canvas.height; y += 28) ctx.fillRect(canvas.width/2 - 2, y, 4, 14);
+        ctx.fillStyle = cfg.paddle; ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h); ctx.fillRect(ai.x, ai.y, ai.w, ai.h);
+        ctx.beginPath(); ctx.fillStyle = cfg.ball; ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 28); ctx.fillText(`${score} - ${aiScore}`, canvas.width / 2 - 22, 28);
+      }
+      currentStop = startLoop(draw, loop, () => ks.destroy());
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeBreakoutGame(cfg) {
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay }) {
+      const { canvas, ctx } = canvasContext(900, 560);
+      const ks = keyState();
+      const paddle = { x: 380, y: 500, w: 140, h: 16 };
+      const ball = { x: canvas.width / 2, y: 420, vx: cfg.vx, vy: cfg.vy, r: 8 };
+      const rows = 6, cols = 10, bw = 76, bh = 22, gap = 8, startX = 38, startY = 60;
+      let lives = 3;
+      let score = 0;
+      let dead = false;
+      const bricks = [];
+      const palette = [cfg.c1, cfg.c2, cfg.c3, cfg.c4, cfg.c5, cfg.c6];
+      function build() {
+        bricks.length = 0;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) bricks.push({ x: startX + c * (bw + gap), y: startY + r * (bh + gap), w: bw, h: bh, alive: true, col: palette[r % palette.length] });
+      }
+      function resetBall() { ball.x = canvas.width / 2; ball.y = 420; ball.vx = cfg.vx * (Math.random() > .5 ? 1 : -1); ball.vy = cfg.vy; }
+      function die() { dead = true; showOverlay(cfg.name, `Score ${score}`); }
+      function loop() {
+        if (dead) return;
+        if (ks.state.keys.has('ArrowLeft')) paddle.x -= 10;
+        if (ks.state.keys.has('ArrowRight')) paddle.x += 10;
+        paddle.x = clamp(paddle.x, 0, canvas.width - paddle.w);
+        ball.x += ball.vx; ball.y += ball.vy;
+        if (ball.x < ball.r || ball.x > canvas.width - ball.r) ball.vx *= -1;
+        if (ball.y < ball.r) ball.vy *= -1;
+        if (ball.y > canvas.height + 20) { lives--; if (lives <= 0) return die(); resetBall(); }
+        if (ball.y + ball.r > paddle.y && ball.y - ball.r < paddle.y + paddle.h && ball.x > paddle.x && ball.x < paddle.x + paddle.w && ball.vy > 0) {
+          const hit = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2);
+          ball.vx = hit * 6;
+          ball.vy = -Math.abs(ball.vy);
+        }
+        for (const b of bricks) {
+          if (!b.alive) continue;
+          if (ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w && ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h) {
+            b.alive = false; score += 10; ball.vy *= -1; break;
+          }
+        }
+        if (bricks.every(b => !b.alive)) { dead = true; showOverlay(cfg.name, `You cleared the board! Score ${score}`); }
+      }
+      function draw() {
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(0,0,canvas.width,48);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 30); ctx.fillText(`Score ${score}`, canvas.width - 170, 30); ctx.fillText(`Lives ${lives}`, canvas.width - 70, 30);
+        for (const b of bricks) {
+          if (!b.alive) continue;
+          ctx.fillStyle = b.col;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+        }
+        ctx.fillStyle = cfg.paddle;
+        ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+        ctx.beginPath(); ctx.fillStyle = cfg.ball; ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); ctx.fill();
+      }
+      build();
+      currentStop = startLoop(draw, loop, () => ks.destroy());
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeAimGame(cfg) {
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay, rand }) {
+      const { canvas, ctx } = canvasContext(900, 560);
+      const ks = keyState();
+      let score = 0;
+      let time = 30 * 60;
+      let dead = false;
+      const targets = [];
+      function spawn() { targets.push({ x: rand(40, canvas.width - 40), y: rand(70, canvas.height - 40), r: rand(12, 28), life: 220 }); }
+      for (let i = 0; i < 8; i++) spawn();
+      function loop() {
+        if (dead) return;
+        time--;
+        for (const t of targets) t.life--;
+        while (targets.length < 8) spawn();
+        if (time <= 0) { dead = true; showOverlay(cfg.name, `Final score ${score}`); }
+      }
+      function clickTarget(mx, my) {
+        for (let i = targets.length - 1; i >= 0; i--) {
+          const t = targets[i];
+          const dx = mx - t.x, dy = my - t.y;
+          if (Math.hypot(dx, dy) <= t.r) { targets.splice(i, 1); score += 10; spawn(); break; }
+        }
+      }
+      function onMouseDown(e) { if (dead) return; clickTarget(e.clientX, e.clientY); }
+      function onTouchStart(e) { if (dead) return; const t = e.touches[0]; if (t) clickTarget(t.clientX, t.clientY); }
+      window.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      function draw() {
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(0,0,canvas.width,48);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 30); ctx.fillText(`Score ${score}`, canvas.width/2 - 50, 30); ctx.fillText(`Time ${Math.ceil(time/60)}`, canvas.width - 110, 30);
+        for (const t of targets) {
+          ctx.beginPath(); ctx.fillStyle = t.life < 60 ? cfg.warn : cfg.target; ctx.arc(t.x, t.y, t.r, 0, Math.PI*2); ctx.fill();
+        }
+      }
+      currentStop = startLoop(draw, loop, () => { ks.destroy(); window.removeEventListener('mousedown', onMouseDown); window.removeEventListener('touchstart', onTouchStart); });
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeMemoryGame(cfg) {
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay, rand, choice }) {
+      const { canvas, ctx } = canvasContext(720, 720);
+      const ks = keyState();
+      const size = 4;
+      const cell = canvas.width / size;
+      const symbols = ['◆','●','■','▲','✦','✚','☀','☯'];
+      let board = [];
+      let selected = [];
+      let matched = 0;
+      let score = 0;
+      let dead = false;
+      let lock = false;
+      function build() {
+        board = [];
+        const vals = [...symbols.slice(0,8), ...symbols.slice(0,8)];
+        for (let i = vals.length - 1; i > 0; i--) { const j = Math.floor(rand(0, i + 1)); [vals[i], vals[j]] = [vals[j], vals[i]]; }
+        for (let i = 0; i < 16; i++) board.push({ v: vals[i], revealed: false, matched: false });
+      }
+      function idxToPos(i){ return { x:(i % size) * cell, y: Math.floor(i / size) * cell }; }
+      function pick(i) {
+        if (lock || board[i].revealed || board[i].matched) return;
+        board[i].revealed = true;
+        selected.push(i);
+        if (selected.length === 2) {
+          lock = true;
+          const [a,b] = selected;
+          if (board[a].v === board[b].v) {
+            board[a].matched = board[b].matched = true;
+            matched += 2; score += 10; selected = []; lock = false;
+            if (matched === 16) { dead = true; showOverlay(cfg.name, `Perfect! Score ${score}`); }
+          } else {
+            setTimeout(() => { board[a].revealed = false; board[b].revealed = false; selected = []; lock = false; }, 700);
+          }
+        }
+      }
+      function click(e) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * canvas.width / rect.width;
+        const my = (e.clientY - rect.top) * canvas.height / rect.height;
+        const col = Math.floor(mx / cell), row = Math.floor(my / cell);
+        const i = row * size + col;
+        if (i >= 0 && i < board.length) pick(i);
+      }
+      canvas.addEventListener('mousedown', click);
+      canvas.addEventListener('touchstart', e => { const t = e.touches[0]; if (t) click(t); }, { passive:true });
+      build();
+      function loop() {}
+      function draw() {
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(0,0,canvas.width,48);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 30); ctx.fillText(`Matched ${matched}/16`, canvas.width/2 - 68, 30); ctx.fillText(`Score ${score}`, canvas.width - 120, 30);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (let i = 0; i < board.length; i++) {
+          const p = idxToPos(i), b = board[i];
+          ctx.fillStyle = b.matched ? cfg.matched : b.revealed ? cfg.open : cfg.closed;
+          ctx.fillRect(p.x + 8, p.y + 8, cell - 16, cell - 16);
+          if (b.revealed || b.matched) { ctx.fillStyle = '#fff'; ctx.font = 'bold 44px serif'; ctx.fillText(b.v, p.x + cell/2, p.y + cell/2 + 2); }
+        }
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      }
+      currentStop = startLoop(draw, loop, () => ks.destroy());
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeClickerGame(cfg) {
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay, rand }) {
+      const { canvas, ctx } = canvasContext(900, 560);
+      const ks = keyState();
+      let score = 0;
+      let time = cfg.time * 60;
+      let dead = false;
+      const buttons = [];
+      function spawn() {
+        buttons.push({ x: rand(80, canvas.width - 80), y: rand(80, canvas.height - 80), r: rand(18, 38), life: rand(90, 180) });
+      }
+      for (let i = 0; i < 6; i++) spawn();
+      function hit(mx, my) {
+        for (let i = buttons.length - 1; i >= 0; i--) {
+          const b = buttons[i];
+          if (Math.hypot(mx - b.x, my - b.y) < b.r) { buttons.splice(i,1); score += 1; spawn(); break; }
+        }
+      }
+      function click(e){ if (dead) return; hit(e.clientX, e.clientY); }
+      window.addEventListener('mousedown', click);
+      function loop(){
+        if (dead) return;
+        time--;
+        for (const b of buttons) b.life--;
+        while (buttons.length < 7) spawn();
+        if (time <= 0) { dead = true; showOverlay(cfg.name, `Clicks ${score}`); }
+      }
+      function draw(){
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(0,0,canvas.width,48);
+        ctx.fillStyle = '#fff'; ctx.font='bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 30); ctx.fillText(`Score ${score}`, canvas.width/2 - 42, 30); ctx.fillText(`Time ${Math.ceil(time/60)}`, canvas.width - 110, 30);
+        for (const b of buttons) {
+          ctx.beginPath(); ctx.fillStyle = b.life < 50 ? cfg.warn : cfg.target; ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+        }
+      }
+      currentStop = startLoop(draw, loop, () => { ks.destroy(); window.removeEventListener('mousedown', click); });
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeWordGuessGame(cfg) {
+  const words = ['planet','rocket','pixel','wizard','shadow','orange','glitch','silver','matrix','vector','arcade','tunnel'];
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay, rand, choice }) {
+      const { canvas, ctx } = canvasContext(900, 560);
+      const ks = keyState();
+      let score = 0;
+      let word = choice(words);
+      let input = '';
+      let time = 60 * 60;
+      let dead = false;
+      function nextWord(){ word = choice(words); input = ''; score++; }
+      function onKeyDown(e) {
+        if (dead) return;
+        if (e.key === 'Enter') { if (input.toLowerCase() === word) nextWord(); else input = ''; }
+        else if (e.key === 'Backspace') { input = input.slice(0,-1); }
+        else if (e.key.length === 1 && /[a-z]/i.test(e.key) && input.length < 12) { input += e.key; }
+      }
+      window.addEventListener('keydown', onKeyDown);
+      function loop(){ if (dead) return; time--; if (time <= 0) { dead = true; showOverlay(cfg.name, `Solved ${score} words`); } }
+      function draw(){
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(0,0,canvas.width,48);
+        ctx.fillStyle = '#fff'; ctx.font='bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 30); ctx.fillText(`Score ${score}`, canvas.width/2 - 42, 30); ctx.fillText(`Time ${Math.ceil(time/60)}`, canvas.width - 110, 30);
+        ctx.fillStyle = cfg.panel; ctx.fillRect(130, 150, 640, 110);
+        ctx.fillStyle = '#fff'; ctx.font='bold 52px sans-serif'; ctx.textAlign='center'; ctx.fillText(word, canvas.width/2, 220);
+        ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(240, 320, 420, 60);
+        ctx.fillStyle = '#fff'; ctx.font='28px sans-serif'; ctx.fillText(input || 'type here...', canvas.width/2, 360);
+        ctx.font='16px sans-serif'; ctx.fillStyle = cfg.muted; ctx.fillText('Press Enter to submit', canvas.width/2, 410);
+        ctx.textAlign='left';
+      }
+      currentStop = startLoop(draw, loop, () => { ks.destroy(); window.removeEventListener('keydown', onKeyDown); });
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeTypingGame(cfg) {
+  const prompts = ['the quick brown fox jumps over the lazy dog', 'geometry dash is fast and fun', 'play more games and beat the score', 'single file web games are neat'];
+  return {
+    mount({ canvasContext, showOverlay, hideOverlay, choice }) {
+      const { canvas, ctx } = canvasContext(900, 560);
+      const ks = keyState();
+      let prompt = choice(prompts);
+      let input = '';
+      let score = 0;
+      let time = 45 * 60;
+      let dead = false;
+      function next(){ prompt = choice(prompts); input=''; score += 10; }
+      function onKeyDown(e){
+        if (dead) return;
+        if (e.key === 'Enter') { if (input.trim().toLowerCase() === prompt) next(); }
+        else if (e.key === 'Backspace') input = input.slice(0,-1);
+        else if (e.key.length === 1) input += e.key;
+      }
+      window.addEventListener('keydown', onKeyDown);
+      function loop(){ if (dead) return; time--; if (time <= 0) { dead = true; showOverlay(cfg.name, `Final score ${score}`); } }
+      function draw(){
+        ctx.fillStyle = cfg.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = '#fff'; ctx.font='bold 20px sans-serif'; ctx.fillText(cfg.name, 18, 30); ctx.fillText(`Score ${score}`, canvas.width/2 - 42, 30); ctx.fillText(`Time ${Math.ceil(time/60)}`, canvas.width - 110, 30);
+        ctx.fillStyle = cfg.panel; ctx.fillRect(70, 150, 760, 90);
+        ctx.fillStyle = '#fff'; ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText(prompt, canvas.width/2, 205);
+        ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(70, 290, 760, 70);
+        ctx.fillStyle = '#dbeafe'; ctx.font='24px sans-serif'; ctx.fillText(input || 'type the sentence here...', canvas.width/2, 335);
+        ctx.fillStyle = cfg.muted; ctx.font='16px sans-serif'; ctx.fillText('Exact match, then press Enter', canvas.width/2, 395);
+        ctx.textAlign='left';
+      }
+      currentStop = startLoop(draw, loop, () => { ks.destroy(); window.removeEventListener('keydown', onKeyDown); });
+      return { stop: currentStop.stop };
+    }
+  };
+}
+
+function makeMemoryMatchGame(cfg) { return makeMemoryGame(cfg); }
+function makeTapRushGame(cfg) { return makeClickerGame(cfg); }
+
+const GAMES = [
+  { name:'Geometry Dash Lite', desc:'Jump over spikes and chase a higher score.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Geometry Dash Lite', sky1:'#132447', sky2:'#050b14', ground:'#131823', player:'#00d4ff', obstacle:'#ff4d6d', jump:-12.3, gravity:0.7, speed:6, spawnMin:55, spawnVar:40, obW:34, obH:38 }) },
+  { name:'Neon Dash', desc:'Faster runner with tighter jumps.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Neon Dash', sky1:'#19153b', sky2:'#06060f', ground:'#12131c', player:'#ffcc00', obstacle:'#9b5cff', jump:-13.2, gravity:0.74, speed:6.5, spawnMin:50, spawnVar:35, obW:36, obH:42 }) },
+  { name:'Turbo Dash', desc:'A harder runner with more speed.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Turbo Dash', sky1:'#10223d', sky2:'#03060a', ground:'#111827', player:'#36d399', obstacle:'#ff5c7a', jump:-12.5, gravity:0.72, speed:7.5, spawnMin:45, spawnVar:35, obW:34, obH:40 }) },
+  { name:'Sky Sprint', desc:'Bright sky runner with smooth pacing.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Sky Sprint', sky1:'#84ccff', sky2:'#eff6ff', ground:'#4b5563', player:'#1e3a8a', obstacle:'#ef4444', jump:-11.6, gravity:0.64, speed:5.7, spawnMin:62, spawnVar:35, obW:30, obH:34 }) },
+  { name:'Night Sprint', desc:'Dark runner with glowing obstacles.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Night Sprint', sky1:'#050816', sky2:'#0b1220', ground:'#101827', player:'#f59e0b', obstacle:'#22d3ee', jump:-12.1, gravity:0.68, speed:6.3, spawnMin:55, spawnVar:45, obW:34, obH:38 }) },
+
+  { name:'Snake Classic', desc:'The classic snake game.', tag:'classic', category:'classic', mount: makeSnakeGame({ name:'Snake Classic', bg:'#07130b', head:'#f472b6', body:'#34d399', food:'#f43f5e', speed:8 }) },
+  { name:'Snake Neon', desc:'Snake with a brighter look and faster pace.', tag:'classic', category:'classic', mount: makeSnakeGame({ name:'Snake Neon', bg:'#050615', head:'#00d4ff', body:'#7c5cff', food:'#ff5c7a', speed:7 }) },
+  { name:'Snake Rush', desc:'Tighter turns and quicker growth.', tag:'classic', category:'classic', mount: makeSnakeGame({ name:'Snake Rush', bg:'#0b1020', head:'#fbbf24', body:'#60a5fa', food:'#fb7185', speed:6 }) },
+  { name:'Snake Circuit', desc:'A grid-based snake challenge.', tag:'classic', category:'classic', mount: makeSnakeGame({ name:'Snake Circuit', bg:'#060b0f', head:'#22c55e', body:'#0ea5e9', food:'#f97316', speed:7 }) },
+  { name:'Snake Void', desc:'Dark mode snake with high contrast.', tag:'classic', category:'classic', mount: makeSnakeGame({ name:'Snake Void', bg:'#02040a', head:'#ffffff', body:'#64748b', food:'#ef4444', speed:7 }) },
+
+  { name:'Pong Arena', desc:'Classic one-on-one pong.', tag:'classic', category:'classic', mount: makePongGame({ name:'Pong Arena', bg:'#020617', paddle:'#e2e8f0', ball:'#f8fafc', vx:6, vy:4, target:7 }) },
+  { name:'Pong Neon', desc:'Glowy pong with a fast ball.', tag:'classic', category:'classic', mount: makePongGame({ name:'Pong Neon', bg:'#050816', paddle:'#00d4ff', ball:'#ffcc00', vx:6.5, vy:4.5, target:7 }) },
+  { name:'Pong Turbo', desc:'Harder AI and quicker rebounds.', tag:'classic', category:'classic', mount: makePongGame({ name:'Pong Turbo', bg:'#0b1020', paddle:'#34d399', ball:'#f43f5e', vx:7, vy:5, target:9 }) },
+  { name:'Pong Retro', desc:'Old-school pixel style pong.', tag:'classic', category:'classic', mount: makePongGame({ name:'Pong Retro', bg:'#111827', paddle:'#fbbf24', ball:'#ffffff', vx:5.5, vy:3.8, target:6 }) },
+  { name:'Pong Ultra', desc:'Balanced but sharp pong.', tag:'classic', category:'classic', mount: makePongGame({ name:'Pong Ultra', bg:'#07111f', paddle:'#c084fc', ball:'#7dd3fc', vx:6.2, vy:4.2, target:8 }) },
+
+  { name:'Breakout', desc:'Brick breaker with multiple lives.', tag:'arcade', category:'arcade', mount: makeBreakoutGame({ name:'Breakout', bg:'#08111d', paddle:'#00d4ff', ball:'#ffffff', vx:5, vy:-5, c1:'#8b5cf6', c2:'#06b6d4', c3:'#22c55e', c4:'#eab308', c5:'#f97316', c6:'#ef4444' }) },
+  { name:'Breakout Neon', desc:'Bright bricks and quick action.', tag:'arcade', category:'arcade', mount: makeBreakoutGame({ name:'Breakout Neon', bg:'#050816', paddle:'#f472b6', ball:'#f8fafc', vx:5.4, vy:-5.2, c1:'#22d3ee', c2:'#818cf8', c3:'#34d399', c4:'#fbbf24', c5:'#fb7185', c6:'#c084fc' }) },
+  { name:'Breakout Rush', desc:'Faster ball and tighter control.', tag:'arcade', category:'arcade', mount: makeBreakoutGame({ name:'Breakout Rush', bg:'#0a1022', paddle:'#60a5fa', ball:'#ffffff', vx:6, vy:-6, c1:'#38bdf8', c2:'#4ade80', c3:'#f59e0b', c4:'#f472b6', c5:'#a78bfa', c6:'#fb7185' }) },
+  { name:'Breakout Classic', desc:'Simple and clean brick breaker.', tag:'arcade', category:'arcade', mount: makeBreakoutGame({ name:'Breakout Classic', bg:'#101827', paddle:'#e5e7eb', ball:'#ffffff', vx:5.2, vy:-5.2, c1:'#93c5fd', c2:'#c4b5fd', c3:'#86efac', c4:'#fde68a', c5:'#fdba74', c6:'#fca5a5' }) },
+  { name:'Breakout Max', desc:'A tougher brick wall.', tag:'arcade', category:'arcade', mount: makeBreakoutGame({ name:'Breakout Max', bg:'#05070d', paddle:'#f59e0b', ball:'#f8fafc', vx:6.2, vy:-5.8, c1:'#0ea5e9', c2:'#8b5cf6', c3:'#14b8a6', c4:'#eab308', c5:'#f97316', c6:'#ef4444' }) },
+
+  { name:'Aim Trainer', desc:'Click circles as fast as you can.', tag:'action', category:'action', mount: makeAimGame({ name:'Aim Trainer', bg:'#07111f', target:'#00d4ff', warn:'#ff5c7a' }) },
+  { name:'Target Burst', desc:'Fast target clicking challenge.', tag:'action', category:'action', mount: makeAimGame({ name:'Target Burst', bg:'#050816', target:'#f472b6', warn:'#fde047' }) },
+  { name:'Circle Pop', desc:'Pop targets before they expire.', tag:'action', category:'action', mount: makeAimGame({ name:'Circle Pop', bg:'#0b1020', target:'#34d399', warn:'#f97316' }) },
+  { name:'Quick Shot', desc:'A speed clicking arena.', tag:'action', category:'action', mount: makeClickerGame({ name:'Quick Shot', bg:'#0a1022', target:'#7c5cff', warn:'#ff5c7a', time:30 }) },
+  { name:'Tap Rush', desc:'Tap the moving targets.', tag:'action', category:'action', mount: makeTapRushGame({ name:'Tap Rush', bg:'#060b0f', target:'#22d3ee', warn:'#f97316', time:30 }) },
+
+  { name:'Memory Match', desc:'Flip cards and match pairs.', tag:'puzzle', category:'puzzle', mount: makeMemoryGame({ name:'Memory Match', bg:'#07111f', panel:'#12243f', closed:'#1f2d4f', open:'#334155', matched:'#16a34a' }) },
+  { name:'Memory Neon', desc:'A brighter matching board.', tag:'puzzle', category:'puzzle', mount: makeMemoryGame({ name:'Memory Neon', bg:'#050816', panel:'#111827', closed:'#312e81', open:'#4338ca', matched:'#10b981' }) },
+  { name:'Memory Grid', desc:'Match all 8 pairs.', tag:'puzzle', category:'puzzle', mount: makeMemoryGame({ name:'Memory Grid', bg:'#0b1020', panel:'#13233d', closed:'#1d4ed8', open:'#2563eb', matched:'#22c55e' }) },
+  { name:'Word Guess', desc:'Type the word and press Enter.', tag:'puzzle', category:'puzzle', mount: makeWordGuessGame({ name:'Word Guess', bg:'#07111f', panel:'#13233d', muted:'#93c5fd' }) },
+  { name:'Typing Blitz', desc:'Type full sentences quickly.', tag:'puzzle', category:'puzzle', mount: makeTypingGame({ name:'Typing Blitz', bg:'#050816', panel:'#111827', muted:'#a5b4fc' }) },
+
+  { name:'Jet Runner', desc:'A vertical runner with easy controls.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Jet Runner', sky1:'#0f172a', sky2:'#030712', ground:'#111827', player:'#facc15', obstacle:'#fb7185', jump:-11.8, gravity:0.66, speed:5.6, spawnMin:58, spawnVar:35, obW:34, obH:36 }) },
+  { name:'Laser Runner', desc:'A slightly harder run.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Laser Runner', sky1:'#111827', sky2:'#020617', ground:'#0f172a', player:'#38bdf8', obstacle:'#f43f5e', jump:-12.2, gravity:0.7, speed:6.6, spawnMin:50, spawnVar:34, obW:34, obH:40 }) },
+  { name:'Cloud Runner', desc:'Light and floaty runner.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Cloud Runner', sky1:'#bae6fd', sky2:'#eff6ff', ground:'#94a3b8', player:'#2563eb', obstacle:'#ef4444', jump:-10.8, gravity:0.58, speed:5.2, spawnMin:62, spawnVar:40, obW:30, obH:32 }) },
+  { name:'Vortex Dash', desc:'Fast and sharp obstacle timing.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Vortex Dash', sky1:'#17132c', sky2:'#04050a', ground:'#0f172a', player:'#f472b6', obstacle:'#22d3ee', jump:-12.9, gravity:0.73, speed:7.1, spawnMin:46, spawnVar:30, obW:36, obH:42 }) },
+  { name:'Pulse Dash', desc:'Smooth rhythm-based runner.', tag:'runner', category:'runner', mount: makeRunnerGame({ name:'Pulse Dash', sky1:'#06212e', sky2:'#010409', ground:'#0b1220', player:'#22c55e', obstacle:'#a855f7', jump:-12.0, gravity:0.68, speed:6.1, spawnMin:54, spawnVar:35, obW:34, obH:38 }) },
+
+  { name:'Arcade Blast', desc:'Simple shooting action challenge.', tag:'action', category:'action', mount: makeAimGame({ name:'Arcade Blast', bg:'#08111d', target:'#f59e0b', warn:'#f43f5e' }) },
+  { name:'Pixel Pop', desc:'Pop targets on a darker board.', tag:'action', category:'action', mount: makeAimGame({ name:'Pixel Pop', bg:'#0a1022', target:'#60a5fa', warn:'#fb7185' }) },
+  { name:'Dash Click', desc:'Click the moving circles fast.', tag:'action', category:'action', mount: makeClickerGame({ name:'Dash Click', bg:'#050816', target:'#34d399', warn:'#f97316', time:35 }) },
+  { name:'Rapid Tap', desc:'Tap rush with a shorter timer.', tag:'action', category:'action', mount: makeClickerGame({ name:'Rapid Tap', bg:'#07111f', target:'#c084fc', warn:'#fb7185', time:25 }) },
+  { name:'Burst Tap', desc:'Another quick tapping challenge.', tag:'action', category:'action', mount: makeClickerGame({ name:'Burst Tap', bg:'#101827', target:'#00d4ff', warn:'#ff5c7a', time:20 }) }
 ];
 
-const container = document.getElementById("games");
-games.forEach(g=>{
- let d=document.createElement("div");
- d.className="game";
- d.innerHTML="<h3>"+g.name+"</h3>";
- d.onclick=()=>loadGame(g.run);
- container.appendChild(d);
-});
+backBtn.onclick = () => {
+  endCurrentLoop();
+  hideOverlay();
+  gameArea.innerHTML = '<div style="text-align:center;color:var(--muted);max-width:480px;padding:20px;line-height:1.6">Click a game card to launch it here. A lot of these are parameterized versions of real mini-games so the library stays big and playable in one file.</div>';
+  stageTitle.textContent = 'Pick a game';
+  stageDesc.textContent = 'Choose something from the list on the left.';
+  currentGame = null;
+};
+restartBtn.onclick = () => { if (currentGame) setActiveGame(currentGame); };
+randomBtn.onclick = () => { const visible = renderList(); if (visible.length) setActiveGame(choice(visible)); };
+search.oninput = renderList;
+filter.onchange = renderList;
 
-function loadGame(fn){
- document.getElementById("games").style.display="none";
- document.getElementById("back").style.display="block";
- fn();
-}
-
-function goBack(){
- location.reload();
-}
-
-function createCanvas(w,h){
- let c=document.createElement("canvas");
- c.width=w;c.height=h;
- document.getElementById("gameArea").innerHTML="";
- document.getElementById("gameArea").appendChild(c);
- return c.getContext("2d");
-}
-
-/* ================= GAMES ================= */
-
-/* Geometry Dash */
-function gd(){
- let x=createCanvas(innerWidth,400);
- let y=300,v=0,g=0.6;
- let spikes=[{x:600}];
-
- onkeydown=()=>{ if(y>=300)v=-12 };
-
- function loop(){
-  v+=g; y+=v;
-  if(y>300){y=300;v=0}
-
-  x.fillStyle="#000"; x.fillRect(0,0,innerWidth,400);
-
-  x.fillStyle="#0ff";
-  x.fillRect(100,y,40,40);
-
-  x.fillStyle="red";
-  spikes.forEach(s=>{
-    s.x-=6;
-    x.fillRect(s.x,320,40,40);
-    if(Math.abs(s.x-100)<30 && y>=300){
-      alert("Game Over"); location.reload();
-    }
-  });
-
-  if(spikes[spikes.length-1].x<400)
-    spikes.push({x:innerWidth});
-
-  requestAnimationFrame(loop);
- }
- loop();
-}
-
-/* Snake */
-function snake(){
- let x=createCanvas(400,400);
- let s=[{x:200,y:200}],dx=20,dy=0;
- let food={x:100,y:100};
-
- onkeydown=e=>{
-  if(e.key=="ArrowUp"){dx=0;dy=-20}
-  if(e.key=="ArrowDown"){dx=0;dy=20}
-  if(e.key=="ArrowLeft"){dx=-20;dy=0}
-  if(e.key=="ArrowRight"){dx=20;dy=0}
- };
-
- function loop(){
-  let h={x:s[0].x+dx,y:s[0].y+dy};
-  if(h.x<0||h.y<0||h.x>=400||h.y>=400||s.some(p=>p.x==h.x&&p.y==h.y)){
-    alert("Game Over"); location.reload();
-  }
-  s.unshift(h);
-
-  if(h.x==food.x&&h.y==food.y){
-    food.x=Math.floor(Math.random()*20)*20;
-    food.y=Math.floor(Math.random()*20)*20;
-  } else s.pop();
-
-  x.fillStyle="#000"; x.fillRect(0,0,400,400);
-  x.fillStyle="lime"; s.forEach(p=>x.fillRect(p.x,p.y,18,18));
-  x.fillStyle="red"; x.fillRect(food.x,food.y,18,18);
-
-  setTimeout(loop,100);
- }
- loop();
-}
-
-/* Pong */
-function pong(){
- let x=createCanvas(600,400);
- let py=150,bx=300,by=200,dx=4,dy=3;
-
- onmousemove=e=>py=e.clientY;
-
- function loop(){
-  bx+=dx; by+=dy;
-
-  if(by<0||by>400)dy*=-1;
-  if(bx<20&&by>py&&by<py+100)dx*=-1;
-
-  if(bx>600){alert("Lose");location.reload()}
-
-  x.fillStyle="#000"; x.fillRect(0,0,600,400);
-  x.fillStyle="#fff";
-  x.fillRect(10,py,10,100);
-  x.fillRect(bx,by,10,10);
-
-  requestAnimationFrame(loop);
- }
- loop();
-}
-
-/* Flappy */
-function flappy(){
- let x=createCanvas(400,600);
- let y=300,v=0,g=0.5;
- let pipes=[{x:400,h:200}];
-
- onkeydown=()=>v=-8;
-
- function loop(){
-  v+=g; y+=v;
-
-  x.fillStyle="#70c5ce";
-  x.fillRect(0,0,400,600);
-
-  x.fillStyle="yellow";
-  x.fillRect(50,y,20,20);
-
-  pipes.forEach(p=>{
-    p.x-=2;
-
-    x.fillStyle="green";
-    x.fillRect(p.x,0,40,p.h);
-    x.fillRect(p.x,p.h+120,40,600);
-
-    if(p.x<70 && p.x>30 && (y<p.h || y>p.h+120)){
-      alert("Game Over"); location.reload();
-    }
-  });
-
-  if(pipes[pipes.length-1].x<200)
-    pipes.push({x:400,h:Math.random()*300});
-
-  requestAnimationFrame(loop);
- }
- loop();
-}
+renderList();
 </script>
-
 </body>
 </html>
