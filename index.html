@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Game Hub</title>
+<style>
+body{margin:0;font-family:sans-serif;background:#0f172a;color:white}
+header{padding:20px;text-align:center;font-size:28px;background:#020617}
+#games{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;padding:20px}
+.game{background:#1e293b;border-radius:12px;padding:15px;cursor:pointer;transition:.2s}
+.game:hover{transform:scale(1.05);background:#334155}
+iframe{position:fixed;top:0;left:0;width:100%;height:100%;border:none;display:none;background:black}
+#back{position:fixed;top:10px;left:10px;z-index:10;display:none;padding:10px 15px;background:#111;color:white;border:none;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body>
+<header>Game Hub</header>
+<button id="back" onclick="closeGame()">Back</button>
+<div id="games"></div>
+<iframe id="frame"></iframe>
+<script>
+const games=[
+{name:"Cube Runner",url:"games/cube.html"},
+{name:"Clicker",url:"games/clicker.html"},
+{name:"Dodge",url:"games/dodge.html"}
+];
+const container=document.getElementById("games");
+games.forEach(g=>{
+let div=document.createElement("div");
+div.className="game";
+div.innerHTML=`<h3>${g.name}</h3>`;
+div.onclick=()=>openGame(g.url);
+container.appendChild(div);
+});
+function openGame(url){
+document.getElementById("frame").style.display="block";
+document.getElementById("back").style.display="block";
+document.getElementById("frame").src=url;
+}
+function closeGame(){
+document.getElementById("frame").style.display="none";
+document.getElementById("back").style.display="none";
+document.getElementById("frame").src="";
+}
+</script>
+</body>
+</html>
